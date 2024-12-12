@@ -1,0 +1,7 @@
+const PORT = process.env.PORT || 3008;
+const ALERT_NUMBER = "584121212949@s.whatsapp.net";
+const BACKUP_CHECK_INTERVAL = 30000; // 30 segundos
+const FALLEN_NODES_CHECK_INTERVAL = 26000; // 25 segundos
+const UPDATE_INTERVAL = 120000; // 2 minutos
+
+module.exports = { PORT, ALERT_NUMBER, BACKUP_CHECK_INTERVAL, FALLEN_NODES_CHECK_INTERVAL, UPDATE_INTERVAL };
