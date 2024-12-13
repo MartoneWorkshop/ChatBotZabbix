@@ -1,12 +1,12 @@
 const { Client } = require('pg');
-
+require('dotenv').config(); // Cargar variables del archivo .env
 // Configuración de la conexión a la base de datos
 const client = new Client({
-    host: 'localhost',     // Dirección del servidor de base de datos
-    port: 5432,           // Puerto (por defecto es 5432)
-    database: 'zabbix',   // Nombre de la base de datos
-    user: 'zabbix',       // Usuario
-    password: 'zabbix'    // Contraseña
+    host: process.env.DB_HOST,      // Dirección del servidor
+    port: parseInt(process.env.DB_PORT, 10), // Puerto
+    database: process.env.DB_NAME,    // Nombre de la base de datos
+    user: process.env.DB_USER,        // Usuario
+    password: process.env.DB_PASSWORD // Contraseña
 });
 
 // Conectar a la base de datos

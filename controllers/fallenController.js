@@ -1,42 +1,44 @@
 const { sendMessageWithDelay } = require('../services/messageService');
 const detectChanges = require('../utils/detectChanges');
+const { SEND_UPDATE_INTERVAL } = require('../config/constants');
 
-const handleFallenUpdates = async (provider, currentFallenNodes, getFallenNodes, ALERT_NUMBER) => {
+let lastFallenMessageSent = 0; // Almacena la última vez que se envió una actualización.
+
+const handleFallenUpdates = async (provider, currentFallenNodes, getFallenNodes, recipients) => {
     const newFallenNodes = await getFallenNodes();
     const { addedNodes, removedNodes } = detectChanges(newFallenNodes, currentFallenNodes, 'mapa_nombre');
+    const now = Date.now();
 
     if (addedNodes.length || removedNodes.length) {
         currentFallenNodes.splice(0, currentFallenNodes.length, ...newFallenNodes);
 
         for (const node of addedNodes) {
-            await sendMessageWithDelay(provider, ALERT_NUMBER,
-                `⚠️ *Nodo Caído* ⚠️\n📍 *Nodo:* ${node.mapa_nombre}\n🕒 *Caído a las:* ${node.momento_caida}\n⏳ *Duración:* ${node.duracion_caida}`,
-                1000
-            );
+            const message = `⚠️ *Nodo Caído* ⚠️\n📍 *Nodo:* ${node.mapa_nombre}\n🕒 *Caído a las:* ${node.momento_caida}\n⏳ *Duración:* ${node.duracion_caida}`;
+            await sendMessageWithDelay(provider, recipients, message, 1400);
         }
 
         for (const node of removedNodes) {
-            await sendMessageWithDelay(provider, ALERT_NUMBER,
-                `✅ *Nodo Caído Recuperado* ✅\n📍 *Nodo:* ${node.mapa_nombre}\n⏳ *Duración:* ${node.duracion_caida}`,
-                2000
-            );
+            const message = `✅ *Nodo Caído Recuperado* ✅\n📍 *Nodo:* ${node.mapa_nombre}\n⏳ *Duración:* ${node.duracion_caida}`;
+            await sendMessageWithDelay(provider, recipients, message, 1400);
         }
+
+        lastFallenMessageSent = now; // Actualizar el último envío
+    } else if (now - lastFallenMessageSent >= SEND_UPDATE_INTERVAL) {
+        await sendFallenUpdates(provider, currentFallenNodes, recipients);
+        lastFallenMessageSent = now; // Actualizar el último envío
     }
 };
 
-const sendFallenUpdates = async (provider, currentFallenNodes, ALERT_NUMBER) => {
+const sendFallenUpdates = async (provider, currentFallenNodes, recipients) => {
     try {
         if (currentFallenNodes.length > 0) {
             for (const node of currentFallenNodes) {
-                await sendMessageWithDelay(
-                    provider,
-                    ALERT_NUMBER,
-                    `🔄 *Actualización Nodo Caído* 🔄\n📍 *Nodo:* ${node.mapa_nombre}\n🕒 *Caído a las:* ${node.momento_caida}\n⏳ *Duración:* ${node.duracion_caida}`,
-                    2000
-                );
+                const message = `🔄 *Actualización Nodo Caído* 🔄\n📍 *Nodo:* ${node.mapa_nombre}\n🕒 *Caído a las:* ${node.momento_caida}\n⏳ *Duración:* ${node.duracion_caida}`;
+                await sendMessageWithDelay(provider, recipients, message, 5000);
             }
         } else {
-            await sendMessageWithDelay(provider, ALERT_NUMBER, "🔄 *Actualización* 🔄\n✅ No hay nodos caídos actualmente.", 3900);
+            const message = "🔄 *Actualización* 🔄\n✅ No hay nodos caídos actualmente.";
+            await sendMessageWithDelay(provider, recipients, message, 5000);
         }
     } catch (error) {
         console.error("Error al enviar actualización de nodos caídos:", error.message);

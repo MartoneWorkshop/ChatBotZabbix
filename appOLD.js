@@ -11,7 +11,7 @@ const sendMessageRoute = require('./routes/sendMessage.js'); // Ruta de sendMess
 const { nodosCaidosRoute, getNodosCaidos } = require('./routes/fallenNodes.js'); // Importar la ruta y función para nodos caídos
 
 // Configuración de puerto del servidor
-const PORT = process.env.PORT || 3008;
+const PORT = process.env.PORT || 3015;
 // Número al que se enviarán los mensajes
 const ALERT_NUMBER = "584121212949@s.whatsapp.net";
 

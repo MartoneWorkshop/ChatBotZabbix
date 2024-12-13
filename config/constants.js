@@ -1,7 +1,6 @@
-const PORT = process.env.PORT || 3008;
-const ALERT_NUMBER = "584121212949@s.whatsapp.net";
-const BACKUP_CHECK_INTERVAL = 30000; // 30 segundos
-const FALLEN_NODES_CHECK_INTERVAL = 26000; // 25 segundos
-const UPDATE_INTERVAL = 120000; // 2 minutos
+const BACKUP_CHECK_INTERVAL = 30000; // 30s Intervalo de verificacion para nodos en respaldo
+const FALLEN_NODES_CHECK_INTERVAL = 25000; // 25s Intervalo de verificacion para nodos caidos
+const SEND_MESSAGE_INTERVAL = 15000; /// Intervalo entre mensajes
+const SEND_UPDATE_INTERVAL = 1000000000; // 2m Intervalo de actualizaciones de estado
 
-module.exports = { PORT, ALERT_NUMBER, BACKUP_CHECK_INTERVAL, FALLEN_NODES_CHECK_INTERVAL, UPDATE_INTERVAL };
+module.exports = { BACKUP_CHECK_INTERVAL, FALLEN_NODES_CHECK_INTERVAL, SEND_UPDATE_INTERVAL, SEND_MESSAGE_INTERVAL};
