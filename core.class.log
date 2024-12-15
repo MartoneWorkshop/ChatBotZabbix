@@ -1,0 +1,49 @@
+[handleMsg]:  {
+  from: '584121212949@s.whatsapp.net',
+  participant: undefined,
+  body: '!start_config',
+  messageTimestamp: 1734235011,
+  pushName: '.'
+}
+[handleMsg]:  {
+  from: '584121212949@s.whatsapp.net',
+  participant: undefined,
+  body: '!show_list',
+  messageTimestamp: 1734235014,
+  pushName: '.'
+}
+[handleMsg]:  {
+  from: '584121212949@s.whatsapp.net',
+  participant: undefined,
+  body: '!group',
+  messageTimestamp: 1734235020,
+  pushName: '.'
+}
+[handleMsg]:  {
+  from: '584121212949@s.whatsapp.net',
+  participant: undefined,
+  body: '!add_group 1',
+  messageTimestamp: 1734235025,
+  pushName: '.'
+}
+[handleMsg]:  {
+  from: '584121212949@s.whatsapp.net',
+  participant: undefined,
+  body: '!save_list',
+  messageTimestamp: 1734235031,
+  pushName: '.'
+}
+[handleMsg]:  {
+  from: '584121212949@s.whatsapp.net',
+  participant: undefined,
+  body: '!show_list',
+  messageTimestamp: 1734235034,
+  pushName: '.'
+}
+[handleMsg]:  {
+  from: '584121212949@s.whatsapp.net',
+  participant: undefined,
+  body: '!end_config',
+  messageTimestamp: 1734235039,
+  pushName: '.'
+}

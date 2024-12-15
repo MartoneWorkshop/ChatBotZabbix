@@ -28,63 +28,85 @@ const configRecipientsFlow = async (bot, message) => {
 
     // Mostrar lista de destinatarios
     if (body.trim() === '!show_list') {
-        const recipients = getRecipients(); // Obtener la lista actual.
-        if (recipients.length > 0) {
-            const formattedList = recipients
-                .map((recipient, index) => `${index + 1}. ${recipient.split('@')[0]}`) // Mostrar sin el sufijo.
-                .join('\n');
-            await bot.sendMessage(
-                from,
-                "📋 *Lista de destinatarios actuales:*\n" +
-                formattedList +
-                "\n\nUsa:\n" +
-                "- `!remove <n de lista>` para eliminar destinatarios.\n" +
-                "- `!phone` para agregar un número de teléfono.\n" +
-                "- `!group` para agregar un grupo."
-            );
-        } else {
-            await bot.sendMessage(
-                from,
-                "ℹ️ *La lista de destinatarios está vacía.* Usa `!phone` o `!group` para agregar destinatarios."
-            );
-        }
-        return;
+    const recipients = getRecipients(); // Obtener la lista actual.
+    if (recipients.length > 0) {
+        // Obtener la información de los grupos disponibles
+        const allChats = await bot.store.chats.all();
+        const groups = allChats.filter(chat => chat.id.endsWith('@g.us'));
+
+        // Formatear lista
+        const formattedList = recipients
+            .map((recipient, index) => {
+                if (recipient.endsWith('@g.us')) {
+                    // Buscar el nombre del grupo correspondiente
+                    const group = groups.find(group => group.id === recipient);
+                    const groupName = group ? group.name || group.subject || 'Grupo desconocido' : 'Grupo no encontrado';
+                    return `${index + 1}. ${groupName}`;
+                } else {
+                    // Mostrar el número sin sufijo
+                    return `${index + 1}. ${recipient.split('@')[0]}`;
+                }
+            })
+            .join('\n');
+
+        await bot.sendMessage(
+            from,
+            "📋 *Lista de destinatarios actuales:*\n" +
+            formattedList +
+            "\n\nComandos disponibles:\n" +
+            "- `!phone` para agregar un número de teléfono.\n" +
+            "- `!group` para agregar un grupo.\n" +
+            "- `!remove <índices>` para eliminar destinatarios.\n" +
+            "- `!end_config` para finalizar la configuración."
+        );
+    } else {
+        await bot.sendMessage(
+            from,
+            "ℹ️ *La lista de destinatarios está vacía.* Usa `!phone` o `!group` para agregar destinatarios."
+        );
     }
+    return;
+}
 
     // Cancelar operación
     if (body.trim() === '!cancel') {
         session.tempRecipient = null; // Limpiar temporal.
         await setSession(from, session); // Guardar sesión.
-        await bot.sendMessage(from, "❌ *Operación cancelada.*");
+        await bot.sendMessage(from, "❌ *Operación cancelada.*\nUsa `!show_list` para ver la lista o `!end_config` para finalizar.");
         return;
     }
 
-    // Eliminar destinatarios
-    if (body.startsWith('!remove ')) {
-        const recipients = getRecipients(); // Obtener la lista actual.
-        const indices = body.split(' ')[1]
-            .split(',')
-            .map((num) => parseInt(num.trim()) - 1) // Convertir a índices del array.
-            .filter((index) => index >= 0 && index < recipients.length); // Validar índices.
+    // Eliminar destinatarios o grupos
+if (body.startsWith('!remove ')) {
+    const recipients = getRecipients(); // Obtener lista actual.
+    const indices = body.split(' ')[1]
+        .split(',')
+        .map((num) => parseInt(num.trim()) - 1) // Convertir a índices del array.
+        .filter((index) => index >= 0 && index < recipients.length); // Validar índices.
 
-        if (indices.length > 0) {
-            const removed = indices.map((index) => recipients[index].split('@')[0]); // Quitar sufijo.
-            const updatedRecipients = recipients.filter((_, index) => !indices.includes(index));
-            updateRecipients(updatedRecipients); // Actualizar la lista global.
-            saveRecipients(); // Guardar lista actualizada.
-            await bot.sendMessage(
-                from,
-                "🗑️ *Destinatarios eliminados:*\n" +
-                removed.join('\n')
-            );
-        } else {
-            await bot.sendMessage(
-                from,
-                "⚠️ *Índices inválidos.* Asegúrate de usar números válidos. Usa `!show_list` para ver los números de la lista."
-            );
-        }
-        return;
+    if (indices.length > 0) {
+        const removed = indices.map((index) => recipients[index].split('@')[0]); // Quitar sufijo.
+        const updatedRecipients = recipients.filter((_, index) => !indices.includes(index));
+        updateRecipients(updatedRecipients); // Actualizar lista global.
+        saveRecipients(); // Guardar lista actualizada.
+        await bot.sendMessage(
+            from,
+            `🗑️ *Eliminado(s):*\n${removed.join('\n')}\n` +
+            "Comandos Disponibles:\n" +
+            "- Escribe `!phone` para agregar un número de teléfono.\n" +
+            "- Escribe `!group` para agregar un grupo.\n" +
+            "- Escribe `!show_list` para ver la lista actual.\n" +
+            "- Escribe `!end_config` para finalizar la configuración."
+        );
+    } else {
+        await bot.sendMessage(
+            from,
+            "⚠️ *Índices inválidos.* Asegúrate de usar números válidos. Usa `!show_list` para ver los números de la lista."
+        );
     }
+    return;
+}
+
 
     // Iniciar configuración
     if (body.trim() === '!start_config') {
@@ -92,10 +114,26 @@ const configRecipientsFlow = async (bot, message) => {
         await setSession(from, session); // Guardar sesión.
         await bot.sendMessage(
             from,
-            "🛠️ *Configuración de destinatarios iniciada* 🛠️\n\n" +
-            "Escribe `!phone` para agregar un número de teléfono o `!group` para agregar un grupo.\n" +
-            "Usa `!show_list` para mostrar la lista actual de destinatarios.\n" +
-            "Usa `!end_config` para finalizar."
+            "🛠️ *Configuración iniciada.*\n\n" +
+            "Comandos disponibles:\n" +
+            "- `!phone` para agregar un número de teléfono.\n" +
+            "- `!group` para agregar un grupo.\n" +
+            "- `!show_list` para mostrar destinatarios.\n" +
+            "- `!end_config` para finalizar."
+        );
+        return;
+    }
+
+    // Configurar modo para agregar número de teléfono
+    if (body.trim() === '!phone') {
+        session.mode = 'phone'; // Establecer el modo de la sesión
+        await setSession(from, session); // Guardar sesión
+        await bot.sendMessage(
+            from,
+            "📞 *Modo agregar números activado.*\n" +
+            "Escribe `!add_number <número>` para agregarlo. Ejemplo:\n" +
+            "`!add_number +58412XXXXXXX` o `!add_number 0412XXXXXXX`.\n" +
+            "Usa `!cancel` para salir."
         );
         return;
     }
@@ -110,51 +148,150 @@ const configRecipientsFlow = async (bot, message) => {
             await setSession(from, session); // Guardar sesión.
             await bot.sendMessage(
                 from,
-                `📞 Has introducido este número: ${formattedNumber}\n` +
-                "Confirma agregarlo enviando `!save` o cancela con `!cancel`."
+                `📞 *Número detectado:* ${formattedNumber}\n` +
+                "Confirma con `!save_list` o cancela con `!cancel`."
             );
         } else {
             await bot.sendMessage(
                 from,
-                "⚠️ *Número inválido.* Asegúrate de usar un formato válido, ejemplo: +584121212949 o 04121212949."
+                "⚠️ *Número inválido.* Asegúrate de usar un formato válido, ejemplo: +58412XXXXXXX o 0412XXXXXXX."
             );
         }
         return;
     }
 
-    // Confirmar guardar número
-    if (body.trim() === '!save' && session.tempRecipient) {
-        const recipient = `${session.tempRecipient}@s.whatsapp.net`; // Internamente se agrega el sufijo.
-        const recipients = getRecipients(); // Obtener lista actual.
+    // Confirmar guardar número o grupo
+    if (body.trim() === '!save_list') {
+    // Guardar número de teléfono
+    if (session.tempRecipient) {
+        const recipient = `${session.tempRecipient}@s.whatsapp.net`; // Internamente se agrega el sufijo
+        const recipients = getRecipients(); // Obtener lista actual
         if (!recipients.includes(recipient)) {
             recipients.push(recipient);
-            updateRecipients(recipients); // Actualizar lista global.
-            saveRecipients(); // Guardar lista actualizada.
-            session.tempRecipient = null; // Limpiar temporal.
-            await setSession(from, session); // Guardar sesión.
+            updateRecipients(recipients); // Actualizar lista global
+            saveRecipients(); // Guardar lista actualizada
+            session.tempRecipient = null; // Limpiar temporal
+            await setSession(from, session); // Guardar sesión
             await bot.sendMessage(
                 from,
-                `✅ *Número agregado:* ${recipient.split('@')[0]}\n` +
-                "Escribe `!show_list` para ver la lista actual."
+                `✅ *Número guardado:* ${recipient.split('@')[0]}\n` +
+                    "Usa `!show_list` para verificar."
             );
         } else {
             await bot.sendMessage(from, "ℹ️ *El número ya está en la lista de destinatarios.*");
         }
+    }
+
+    // Guardar grupo
+    if (session.selectedGroups && session.selectedGroups.length > 0) {
+        const recipients = getRecipients(); // Obtener lista actual
+        session.selectedGroups.forEach(groupId => {
+            if (!recipients.includes(groupId)) {
+                recipients.push(groupId); // Agregar el grupo a la lista
+            }
+        });
+
+        updateRecipients(recipients); // Actualizar lista global
+        saveRecipients(); // Guardar lista actualizada
+        session.selectedGroups = []; // Limpiar la lista de grupos seleccionados
+        await setSession(from, session); // Guardar sesión
+
+        await bot.sendMessage(
+            from,
+            "✅ *Grupos guardados como destinatarios.*\n" +
+                "Usa `!show_list` para verificar."
+        );
+    }else {
+        await bot.sendMessage(from, "⚠️ *No hay elementos pendientes por guardar.*");
+    }
+    return;
+}
+
+    // Mostrar lista de grupos
+    if (body.trim() === '!group') {
+        try {
+            const allChats = await bot.store.chats.all(); // Obtener todos los chats
+            const groups = allChats.filter(chat => chat.id.endsWith('@g.us')); // Filtrar solo grupos
+
+            if (groups.length > 0) {
+                const groupList = groups
+                    .map((group, index) => {
+                        const groupName = group.name || group.subject || 'Nombre no disponible';
+                        return `${index + 1}. ${groupName} (ID: ${group.id})`;
+                    })
+                    .join('\n');
+
+                await bot.sendMessage(
+                    from,
+                    "👥 *Grupos disponibles:*\n" +
+                    groupList +
+                    "\n\nEscribe `!add_group <número>` para agregar un grupo a la lista de destinatarios."
+                );
+            } else {
+                await bot.sendMessage(
+                    from,
+                    "ℹ️ *No se encontraron grupos disponibles.* Asegúrate de que el bot esté en algún grupo."
+                );
+            }
+        } catch (error) {
+            console.error("Error obteniendo grupos:", error);
+            await bot.sendMessage(
+                from,
+                "⚠️ *Error al intentar obtener la lista de grupos.* Revisa los logs para más detalles."
+            );
+        }
         return;
     }
+
+    // Agregar grupo a la lista
+    if (body.startsWith('!add_group ')) {
+        const groupIndex = parseInt(body.split(' ')[1]) - 1; // Obtener el índice del grupo
+
+        const allChats = await bot.store.chats.all();
+        const groups = allChats.filter(chat => chat.id.endsWith('@g.us'));
+
+        if (groupIndex >= 0 && groupIndex < groups.length) {
+            const groupId = groups[groupIndex].id;
+            session.selectedGroups = session.selectedGroups || [];
+            
+            // Agregar el grupo a la lista de grupos seleccionados
+            if (!session.selectedGroups.includes(groupId)) {
+                session.selectedGroups.push(groupId);
+                await setSession(from, session); // Guardar sesión
+                await bot.sendMessage(
+                    from,
+                    `✅ *Grupo agregado:* ${groups[groupIndex].name} (ID: ${groupId})\n` +
+                    "Escribe `!save_list` para guardar los cambios."
+                );
+            } else {
+                await bot.sendMessage(
+                    from,
+                    "ℹ️ *Este grupo ya está en la lista de destinatarios.*"
+                );
+            }
+        } else {
+            await bot.sendMessage(
+                from,
+                "⚠️ *Índice inválido.* Asegúrate de usar un número válido del listado de grupos."
+            );
+        }
+        return;
+    }
+
+    
 
     // Finalizar configuración
     if (body.trim() === '!end_config') {
         await clearSession(from); // Limpiar sesión.
         await bot.sendMessage(
             from,
-            "🛠️ *Configuración finalizada.* Usa `!show_list` para ver la lista de destinatarios actual."
+            "🛠️ *Configuración finalizada.*"
         );
         return;
     }
 
     // Comando no reconocido
-    await bot.sendMessage(from, "❓ *Comando no reconocido.* Usa `!start_config` para comenzar.");
+    await bot.sendMessage(from, "❓ *Comando no reconocido.*");
 };
 
 module.exports = { configRecipientsFlow };
