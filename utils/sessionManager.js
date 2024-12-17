@@ -1,7 +1,17 @@
-const sessions = new Map();
+const sessions = {}; // Objeto global para almacenar sesiones por usuario
 
-const getSession = async (key) => sessions.get(key);
-const setSession = async (key, session) => sessions.set(key, session);
-const clearSession = async (key) => sessions.delete(key);
+const setSession = async (userId, sessionData) => {
+    console.log(`Setting session for ${userId}:`, sessionData);
+    sessions[userId] = sessionData; // Guarda la sesión en el objeto
+};
+
+const getSession = async (userId) => {
+    console.log(`Getting session for ${userId}:`, sessions[userId]);
+    return sessions[userId] || null;
+};
+
+const clearSession = async (userId) => {
+    delete sessions[userId]; // Elimina la sesión del usuario
+};
 
 module.exports = { getSession, setSession, clearSession };

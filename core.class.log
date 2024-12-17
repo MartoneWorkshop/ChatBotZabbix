@@ -1,49 +1,21 @@
 [handleMsg]:  {
-  from: '584121212949@s.whatsapp.net',
-  participant: undefined,
+  from: '120363356240883876@g.us',
+  participant: '584246102214@s.whatsapp.net',
   body: '!start_config',
-  messageTimestamp: 1734235011,
+  messageTimestamp: 1734371776,
+  pushName: 'José Quero'
+}
+[handleMsg]:  {
+  from: '120363356240883876@g.us',
+  participant: '584121212949@s.whatsapp.net',
+  body: '!phone',
+  messageTimestamp: 1734371781,
   pushName: '.'
 }
 [handleMsg]:  {
-  from: '584121212949@s.whatsapp.net',
-  participant: undefined,
-  body: '!show_list',
-  messageTimestamp: 1734235014,
-  pushName: '.'
-}
-[handleMsg]:  {
-  from: '584121212949@s.whatsapp.net',
-  participant: undefined,
-  body: '!group',
-  messageTimestamp: 1734235020,
-  pushName: '.'
-}
-[handleMsg]:  {
-  from: '584121212949@s.whatsapp.net',
-  participant: undefined,
-  body: '!add_group 1',
-  messageTimestamp: 1734235025,
-  pushName: '.'
-}
-[handleMsg]:  {
-  from: '584121212949@s.whatsapp.net',
-  participant: undefined,
-  body: '!save_list',
-  messageTimestamp: 1734235031,
-  pushName: '.'
-}
-[handleMsg]:  {
-  from: '584121212949@s.whatsapp.net',
-  participant: undefined,
-  body: '!show_list',
-  messageTimestamp: 1734235034,
-  pushName: '.'
-}
-[handleMsg]:  {
-  from: '584121212949@s.whatsapp.net',
-  participant: undefined,
-  body: '!end_config',
-  messageTimestamp: 1734235039,
+  from: '120363356240883876@g.us',
+  participant: '584121212949@s.whatsapp.net',
+  body: '!start_config',
+  messageTimestamp: 1734371796,
   pushName: '.'
 }
