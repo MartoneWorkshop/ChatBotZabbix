@@ -5,10 +5,16 @@ services:
     build:
       context: . # Usa el Dockerfile en el directorio actual
     ports:
-      - "${PORT}:${PORT}" # Mapea el puerto del servidor al host
-      - "${QR_PORT}:${QR_PORT}" # Mapea el puerto del QR al host
-    env_file:
-      - .env # Carga las variables desde tu archivo .env
+      - "3008:3008" # Mapea el puerto del servidor al host
+      - "3010:3010" # Mapea el puerto del QR al host
+    environment:
+      - PORT=3008
+      - QR_PORT=3010
+      - DB_HOST=192.168.70.132
+      - DB_PORT=5432
+      - DB_NAME=zabbix
+      - DB_USER=zabbix
+      - DB_PASSWORD=zabbix
     restart: unless-stopped # Reinicia el contenedor automáticamente si falla
     depends_on:
       - database # Espera a que el servicio database esté listo
@@ -16,11 +22,11 @@ services:
   database: # Servicio de PostgreSQL
     image: postgres:14 # Imagen oficial de PostgreSQL
     environment:
-      POSTGRES_USER: ${DB_USER} # Usuario definido en el .env
-      POSTGRES_PASSWORD: ${DB_PASSWORD} # Contraseña definida en el .env
-      POSTGRES_DB: ${DB_NAME} # Nombre de la base de datos definido en el .env
+      - POSTGRES_USER=zabbix
+      - POSTGRES_PASSWORD=zabbix
+      - POSTGRES_DB=zabbix
     ports:
-      - "${DB_PORT}:5432" # Mapea el puerto de PostgreSQL al host
+      - "5432:5432" # Mapea el puerto de PostgreSQL al host
     volumes:
       - db_data:/var/lib/postgresql/data # Volumen persistente para los datos
     restart: unless-stopped # Reinicia automáticamente el contenedor

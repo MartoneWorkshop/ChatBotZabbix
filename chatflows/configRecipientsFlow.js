@@ -44,9 +44,6 @@ const configRecipientsFlow = async (bot, message) => {
             return;
         }
     }
-    
-    
-
 
     // Si no hay sesión activa o si el usuario es el iniciador, se permite comenzar una nueva sesión
     if (body.trim() === '!start_config') {
