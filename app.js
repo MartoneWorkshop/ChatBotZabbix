@@ -3,7 +3,6 @@ const bodyParser = require('body-parser');
 const { connectDB, closeDB } = require('./db');
 const botController = require('./controllers/botController');
 const { getRecipients, updateRecipients, loadRecipients } = require('./utils/updateRecipients');
-require('dotenv').config(); // Cargar variables del archivo .env
 const { SEND_MESSAGE_INTERVAL, SEND_UPDATE_INTERVAL } = require('./config/constants');
 const { createBotService } = require('./services/botService');
 const { handleBackupUpdates, sendBackupUpdates } = require('./controllers/backupController');
