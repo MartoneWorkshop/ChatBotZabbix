@@ -3,37 +3,32 @@ const { getRecipients, updateRecipients, saveRecipients } = require('../utils/up
 
 // Función para formatear números
 const formatPhoneNumber = (input) => {
-    // Eliminar caracteres no numéricos
     let formatted = input.replace(/[^0-9]/g, '');
-    // Validar y corregir formato
     if (formatted.startsWith('58') && formatted.length === 12) {
-        // Correcto: ya tiene prefijo 58 y 10 dígitos
         return formatted;
     } else if (formatted.startsWith('0') && formatted.length === 11) {
-        // Cambiar prefijo 0 por 58
         return `58${formatted.slice(1)}`;
     } else if (formatted.length === 10) {
-        // Asumir que es un número nacional sin prefijo (04121212949)
         return `58${formatted}`;
     } else {
-        // Número inválido
         return null;
     }
 };
 
 const configRecipientsFlow = async (bot, message) => {
-    const { body, from, participant } = message;
+    const { body, from, participant, contacts } = message;
     const userId = participant || from; 
-
     // Verificar si ya hay una sesión activa global
     const activeSession = await getSession('global'); // Obtener sesión global
-    // Ignorar mensajes que no sean el comando !start_config
-    if (message.body !== '!start_config') {
-        return;
+    // Ignorar mensajes que no sean el comando !start_config cuando no hay sesión activa
+    if (!activeSession || !activeSession.isActive) {
+        if (message.body !== '!start_config') {
+            return;
+        }
     }
-    // Si hay una sesión activa y el usuario no es el iniciador, mostrar advertencia
+
+    // Si hay una sesión activa y el usuario no es el iniciador, ignorar mensajes
     if (activeSession && activeSession.isActive) {
-        // Extraer el número de teléfono del initiator quitando @s.whatsapp.net
         const initiatorNumber = activeSession.initiator.split('@')[0];
     
         if (activeSession.initiator !== userId) {
@@ -47,22 +42,20 @@ const configRecipientsFlow = async (bot, message) => {
 
     // Si no hay sesión activa o si el usuario es el iniciador, se permite comenzar una nueva sesión
     if (body.trim() === '!start_config') {
-        // Si ya existe una sesión activa, notificar al usuario
         if (activeSession && activeSession.isActive) {
             await bot.sendMessage(from, "⚠️ *Ya hay una sesión activa.*");
             return;
         }
 
-        // Crear una nueva sesión para el usuario
         const newSession = {
             isActive: true,
             initiator: userId,
             tempRecipient: null,
-            selectedGroups: []
+            selectedGroups: [],
+            mode: null // Agregar modo a la sesión
         };
         await setSession('global', newSession); // Crear sesión global
         await setSession(userId, newSession); // Crear sesión específica para el usuario
-
         await bot.sendMessage(
             from,
             "🛠️ *Configuración iniciada.*\n\n" +
@@ -74,9 +67,9 @@ const configRecipientsFlow = async (bot, message) => {
         );
         return;
     }
+
     // Obtener la sesión del usuario
     const session = await getSession(userId);
-
     // Si no hay sesión activa, retornar sin hacer nada
     if (!session || !session.isActive) {
         await bot.sendMessage(from, "⚠️ *No tienes una sesión activa.*");
@@ -112,33 +105,27 @@ const configRecipientsFlow = async (bot, message) => {
                 "- `!end_config` para finalizar la configuración."
             );
         } else {
-        await bot.sendMessage(
-            from,
-            "ℹ️ *La lista de destinatarios está vacía.* Usa `!phone` o `!group` para agregar destinatarios."
-        );
+            await bot.sendMessage(
+                from,
+                "ℹ️ *La lista de destinatarios está vacía.* Usa `!phone` o `!group` para agregar destinatarios."
+            );
         }
         return;
     }
-    /// Eliminar destinatarios o grupos
+
+    // Eliminar destinatarios o grupos
     if (body.startsWith('!remove ')) {
         const recipients = getRecipients(); // Obtener lista actual.
-
-        // Verificar si el comando !remove es válido
-        if (!body.includes('!show_list')) {
-            await bot.sendMessage(from, "⚠️ *Para eliminar destinatarios, primero usa `!show_list`.*");
-            return;
-        }
-
         const indices = body.split(' ')[1]
             .split(',')
-            .map((num) => parseInt(num.trim()) - 1) // Convertir a índices del array.
-            .filter((index) => index >= 0 && index < recipients.length); // Validar índices.
+            .map((num) => parseInt(num.trim()) - 1)
+            .filter((index) => index >= 0 && index < recipients.length);
 
         if (indices.length > 0) {
-            const removed = indices.map((index) => recipients[index].split('@')[0]); // Quitar sufijo.
+            const removed = indices.map((index) => recipients[index].split('@')[0]);
             const updatedRecipients = recipients.filter((_, index) => !indices.includes(index));
-            updateRecipients(updatedRecipients); // Actualizar lista global.
-            saveRecipients(); // Guardar lista actualizada.
+            updateRecipients(updatedRecipients);
+            saveRecipients();
             await bot.sendMessage(
                 from,
                 `🗑️ *Eliminado(s):*\n${removed.join('\n')}\n` +
@@ -156,61 +143,133 @@ const configRecipientsFlow = async (bot, message) => {
         }
         return;
     }
-    // Configurar modo para agregar número de teléfono
+
+
+
+    // Activar modo para agregar número de teléfono
     if (body.trim() === '!phone') {
-        session.mode = 'phone'; // Establecer el modo de la sesión
-        await setSession(userId, session); // Guardar sesión
+        session.mode = 'phone';
+        await setSession(userId, session);
         await bot.sendMessage(
             from,
             "📞 *Modo agregar números activado.*\n" +
-            "Escribe `!add_number <número>` para agregarlo.\nEjemplo:\n" +
-            "`!add_number +58412XXXXXXX` o `!add_number 0412XXXXXXX`.\n" +
-            "Usa `!cancel` para salir."
+            "Puedes hacer lo siguiente:\n" +
+            "1️⃣ Escribe `!add_number <número>` para agregar un número.\n" +
+            "   Ejemplo: `!add_number +58412XXXXXXX` o `!add_number 0412XXXXXXX`.\n" +
+            "2️⃣ Envía una tarjeta de contacto para agregar el número automáticamente.\n" +
+            "Usa `!save_list` para guardar el número en la lista o `!cancel` para salir."
         );
         return;
     }
-    // Modo de agregar un teléfono
+
+    // Modo "phone" activado
     if (session.mode === 'phone') {
         if (body.trim() === '!cancel') {
-            session.tempRecipient = null; // Limpiar el número temporal
-            await setSession(userId, session); // Guardar la sesión actualizada
-            await bot.sendMessage(from, "❌ *Operación cancelada.*\nLa operación de agregar teléfono ha sido cancelada.");
-            return;
+            session.tempRecipient = null;
+            session.mode = null;
+            await setSession(userId, session);
+        await bot.sendMessage(from, "❌ *Operación cancelada.*");
+        return;
+    }
+
+    if (body.startsWith('contact:')) {
+        const contacts = body.split(' '); // Dividir el mensaje en partes separadas por espacio
+        let allValid = true;
+        const validNumbers = []; // Array para almacenar números válidos
+
+        for (let contact of contacts) {
+            if (contact.startsWith('contact:')) {
+                const phoneNumber = contact.replace('contact:', '').trim(); // Extraer el número de contacto
+                const formattedNumber = formatPhoneNumber(phoneNumber); // Aplicar formato al número
+
+                if (formattedNumber) {
+                    validNumbers.push(formattedNumber); // Agregar número al array
+                    await bot.sendMessage(
+                        from,
+                        `✅ *Número ${formattedNumber} agregado temporalmente.*\n` +
+                        "Escribe `!save_list` para guardar el número o `!cancel` para cancelar."
+                    );
+                } else {
+                    allValid = false;
+                    await bot.sendMessage(from, `⚠️ *El número ${phoneNumber} no es válido o no tiene el formato adecuado.*`);
+                }
+            }
         }
 
-        // Aquí el usuario debe enviar el número para agregar
-        if (body.trim().startsWith('!add_number')) {
-            const phoneNumber = body.trim().split(' ')[1]; // Obtener el número
-            if (phoneNumber) {
-                session.tempRecipient = phoneNumber; // Guardar el número temporal
-                await setSession(userId, session); // Guardar la sesión con el número
-                await bot.sendMessage(from, `✅ *Número ${phoneNumber} agregado temporalmente.*\nEscribe !save_list para guardar la lista o !cancel para cancelar.`);
+        // Almacenar todos los números válidos en session.tempRecipient
+        if (validNumbers.length > 0) {
+            session.tempRecipient = session.tempRecipient || [];
+            session.tempRecipient.push(...validNumbers); // Agregar nuevos números válidos
+            await setSession(userId, session);
+        }
+
+        if (allValid) {
+            await bot.sendMessage(from, "Todos los números fueron agregados correctamente.");
+        } else {
+            await bot.sendMessage(from, "Algunos números no fueron válidos. Revisa los mensajes de advertencia.");
+        }
+        return;
+    }
+    // Verificar si el mensaje contiene un número con el comando !add_number
+    if (body.trim().startsWith('!add_number')) {
+        const phoneNumber = body.trim().split(' ')[1]; // Extraer número
+        if (phoneNumber) {
+            const formattedNumber = formatPhoneNumber(phoneNumber); // Aplicar formato
+            if (formattedNumber) {
+                session.tempRecipient = formattedNumber;
+                await setSession(userId, session);
+                await bot.sendMessage(
+                    from,
+                    `✅ *Número ${formattedNumber} agregado temporalmente.*\n` +
+                    "Escribe `!save_list` para guardar el número o `!cancel` para cancelar."
+                );
             } else {
                 await bot.sendMessage(from, "⚠️ *Por favor, proporciona un número válido con el formato adecuado.*");
             }
-            return;
+        } else {
+            await bot.sendMessage(from, "⚠️ *Por favor, proporciona un número válido con el formato adecuado.*");
         }
-
-        // Comando para guardar la lista de números
-        if (body.trim() === '!save_list') {
-            if (session.tempRecipient) {
-                // Guardar el número en la lista final
-                session.selectedRecipients = session.selectedRecipients || [];
-                session.selectedRecipients.push(session.tempRecipient);
-                session.tempRecipient = null; // Limpiar el número temporal
-                await setSession(userId, session); // Guardar la sesión con la lista actualizada
-                await bot.sendMessage(from, "✅ *Número guardado en la lista.*");
-            } else {
-                await bot.sendMessage(from, "⚠️ *No hay un número para guardar. Usa `!add_number` para agregar un número.*");
-            }
-            return;
-        }
+        return;
     }
+
+    // Guardar número temporal en la lista
+    if (body.trim() === '!save_list') {
+        if (session.tempRecipient) {
+            const recipients = getRecipients();
+            // Verificar si el número es de teléfono y agregarlo con el sufijo correcto
+            if (Array.isArray(session.tempRecipient)) {
+                session.tempRecipient.forEach(number => {
+                    if (number.startsWith('58') && !number.includes('@')) {
+                        number = `${number}@s.whatsapp.net`;
+                    }
+                    recipients.push(number);
+                });
+            } else {
+                if (typeof session.tempRecipient === 'string' && session.tempRecipient.startsWith('58') && !session.tempRecipient.includes('@')) {
+                    session.tempRecipient = `${session.tempRecipient}@s.whatsapp.net`;
+                }
+                recipients.push(session.tempRecipient);
+            }
+            updateRecipients(recipients);
+            saveRecipients();
+            session.tempRecipient = null;
+            session.mode = null;
+            await setSession(userId, session);
+            await bot.sendMessage(from, `✅ *Número(s) agregado(s) a la lista.*`);
+        } else {
+            await bot.sendMessage(from, "⚠️ *No hay números para guardar.*");
+        }
+        return;
+    }
+}
+
     // Mostrar lista de grupos
     if (body.trim() === '!group') {
+        session.mode = 'group';
+        await setSession(userId, session);
         try {
-            const allChats = await bot.store.chats.all(); // Obtener todos los chats
-            const groups = allChats.filter(chat => chat.id.endsWith('@g.us')); // Filtrar solo grupos
+            const allChats = await bot.store.chats.all();
+            const groups = allChats.filter(chat => chat.id.endsWith('@g.us'));
 
             if (groups.length > 0) {
                 const groupList = groups
@@ -224,7 +283,8 @@ const configRecipientsFlow = async (bot, message) => {
                     from,
                     "👥 *Grupos disponibles:*\n" +
                     groupList +
-                    "\n\nEscribe `!add_group <número>` para agregar un grupo a la lista de destinatarios."
+                    "\n\nEscribe `!add_group <número>` para agregar un grupo a la lista de destinatarios.\n" +
+                    "Usa `!cancel` para salir."
                 );
             } else {
                 await bot.sendMessage(
@@ -233,7 +293,6 @@ const configRecipientsFlow = async (bot, message) => {
                 );
             }
         } catch (error) {
-            console.error("Error obteniendo grupos:", error);
             await bot.sendMessage(
                 from,
                 "⚠️ *Error al intentar obtener la lista de grupos.* Revisa los logs para más detalles."
@@ -241,43 +300,55 @@ const configRecipientsFlow = async (bot, message) => {
         }
         return;
     }
-    // Agregar grupo a la lista
-    if (body.startsWith('!add_group ')) {
-        const groupIndex = parseInt(body.split(' ')[1]) - 1; // Obtener el índice del grupo
 
-        const allChats = await bot.store.chats.all();
-        const groups = allChats.filter(chat => chat.id.endsWith('@g.us'));
+    // Modo de agregar un grupo
+    if (session.mode === 'group') {
+        if (body.trim() === '!cancel') {
+            session.tempRecipient = null;
+            session.mode = null;
+            await setSession(userId, session);
+            await bot.sendMessage(from, "❌ *Operación cancelada.*\nLa operación de agregar grupo ha sido cancelada.");
+            return;
+        }
 
-        if (groupIndex >= 0 && groupIndex < groups.length) {
-            const groupId = groups[groupIndex].id;
-            session.selectedGroups = session.selectedGroups || [];
-            
-            // Agregar el grupo a la lista de grupos seleccionados
-            if (!session.selectedGroups.includes(groupId)) {
-                session.selectedGroups.push(groupId);
-                await setSession(userId, session); // Guardar sesión
+        if (body.startsWith('!add_group ')) {
+            const groupIndex = parseInt(body.split(' ')[1]) - 1;
+            const allChats = await bot.store.chats.all();
+            const groups = allChats.filter(chat => chat.id.endsWith('@g.us'));
+
+            if (groupIndex >= 0 && groupIndex < groups.length) {
+                const groupId = groups[groupIndex].id;
+                session.tempRecipient = groupId;
+                await setSession(userId, session);
                 await bot.sendMessage(
                     from,
-                    `✅ *Grupo agregado:* ${groups[groupIndex].name} (ID: ${groupId})\n` +
-                    "Escribe `!save_list` para guardar los cambios."
+                    `✅ *Grupo ${groups[groupIndex].name} agregado temporalmente.*\nEscribe !save_list para guardar la lista o !cancel para cancelar.`
                 );
             } else {
                 await bot.sendMessage(
                     from,
-                    "ℹ️ *Este grupo ya está en la lista de destinatarios.*"
+                    "⚠️ *Índice inválido.* Asegúrate de usar un número válido del listado de grupos."
                 );
             }
-        } else {
-            await bot.sendMessage(
-                from,
-                "⚠️ *Índice inválido.* Asegúrate de usar un número válido del listado de grupos."
-            );
+            return;
         }
-        return;
+
+        if (body.trim() === '!save_list') {
+            if (session.tempRecipient) {
+                session.selectedGroups = session.selectedGroups || [];
+                session.selectedGroups.push(session.tempRecipient);
+                session.tempRecipient = null;
+                await setSession(userId, session);
+                await bot.sendMessage(from, "✅ *Grupo guardado en la lista.*");
+            } else {
+                await bot.sendMessage(from, "⚠️ *No hay un grupo para guardar. Usa `!add_group` para agregar un grupo.*");
+            }
+            return;
+        }
     }
+
     // Finalizar configuración
     if (body.trim() === '!end_config') {
-        // Verificar si hay una sesión activa
         if (!session.isActive) {
             await bot.sendMessage(
                 from,
@@ -286,7 +357,6 @@ const configRecipientsFlow = async (bot, message) => {
             return;
         }
     
-        // Verificar si el usuario que intenta finalizar la sesión es el iniciador
         if (session.initiator !== userId) {
             await bot.sendMessage(
                 from,
@@ -295,14 +365,13 @@ const configRecipientsFlow = async (bot, message) => {
             return;
         }
     
-        // Limpiar la sesión y actualizar la base de datos o almacenamiento
-        session.isActive = false;  // Desactivar sesión
-        session.initiator = null;  // Limpiar el iniciador
-        session.tempRecipient = null;  // Limpiar el destinatario temporal
-        session.selectedGroups = [];  // Limpiar los grupos seleccionados
-        await setSession(userId, session); // Guardar sesión actualizada
+        session.isActive = false;
+        session.initiator = null;
+        session.tempRecipient = null;
+        session.selectedGroups = [];
+        session.mode = null;
+        await setSession(userId, session);
     
-        // Confirmar que la configuración se ha finalizado
         await bot.sendMessage(
             from,
             "🛠️ *Configuración finalizada.* La sesión ha sido cerrada."
@@ -310,8 +379,8 @@ const configRecipientsFlow = async (bot, message) => {
     
         return;
     }
-    // Comando no reconocido
-    await bot.sendMessage(from, "❓ *Comando no reconocido.*");
+
+    await bot.sendMessage(from, `❓ *Comando no reconocido.* ${body}`);
 };
 
 module.exports = { configRecipientsFlow };

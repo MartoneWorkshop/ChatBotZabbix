@@ -1,0 +1,157 @@
+[handleMsg]:  {
+  from: '120363356240883876@g.us',
+  participant: '584121212949@s.whatsapp.net',
+  body: '!start_config',
+  message: Message {
+    conversation: '!start_config',
+    messageContextInfo: MessageContextInfo { messageSecret: [Uint8Array] }
+  },
+  messageTimestamp: 1734982660,
+  pushName: '.'
+}
+[handleMsg]:  {
+  from: '120363356240883876@g.us',
+  participant: '584121212949@s.whatsapp.net',
+  body: '!show_list',
+  message: Message {
+    conversation: '!show_list',
+    messageContextInfo: MessageContextInfo { messageSecret: [Uint8Array] }
+  },
+  messageTimestamp: 1734982663,
+  pushName: '.'
+}
+[handleMsg]:  {
+  from: '120363356240883876@g.us',
+  participant: '584121212949@s.whatsapp.net',
+  body: '!remove 1',
+  message: Message {
+    conversation: '!remove 1',
+    messageContextInfo: MessageContextInfo { messageSecret: [Uint8Array] }
+  },
+  messageTimestamp: 1734982666,
+  pushName: '.'
+}
+[handleMsg]:  {
+  from: '120363356240883876@g.us',
+  participant: '584121212949@s.whatsapp.net',
+  body: '!phone',
+  message: Message {
+    conversation: '!phone',
+    messageContextInfo: MessageContextInfo { messageSecret: [Uint8Array] }
+  },
+  messageTimestamp: 1734982678,
+  pushName: '.'
+}
+[handleMsg]:  {
+  from: '120363356240883876@g.us',
+  participant: '584121212949@s.whatsapp.net',
+  body: '',
+  message: Message {
+    contactsArrayMessage: ContactsArrayMessage {
+      contacts: [Array],
+      contextInfo: [ContextInfo]
+    },
+    messageContextInfo: MessageContextInfo { messageSecret: [Uint8Array] }
+  },
+  messageTimestamp: 1734982688,
+  pushName: '.'
+}
+[handleMsg]:  {
+  from: '120363356240883876@g.us',
+  participant: '584121212949@s.whatsapp.net',
+  body: '!save_list',
+  message: Message {
+    conversation: '!save_list',
+    messageContextInfo: MessageContextInfo { messageSecret: [Uint8Array] }
+  },
+  messageTimestamp: 1734982696,
+  pushName: '.'
+}
+[handleMsg]:  {
+  from: '120363356240883876@g.us',
+  participant: '584121212949@s.whatsapp.net',
+  body: '!show_list',
+  message: Message {
+    conversation: '!show_list',
+    messageContextInfo: MessageContextInfo { messageSecret: [Uint8Array] }
+  },
+  messageTimestamp: 1734982707,
+  pushName: '.'
+}
+[handleMsg]:  {
+  from: '120363356240883876@g.us',
+  participant: '584121212949@s.whatsapp.net',
+  body: '!remove 2',
+  message: Message {
+    conversation: '!remove 2',
+    messageContextInfo: MessageContextInfo { messageSecret: [Uint8Array] }
+  },
+  messageTimestamp: 1734982713,
+  pushName: '.'
+}
+[handleMsg]:  {
+  from: '120363356240883876@g.us',
+  participant: '584121212949@s.whatsapp.net',
+  body: '!remove 2',
+  message: Message {
+    conversation: '!remove 2',
+    messageContextInfo: MessageContextInfo { messageSecret: [Uint8Array] }
+  },
+  messageTimestamp: 1734982717,
+  pushName: '.'
+}
+[handleMsg]:  {
+  from: '120363356240883876@g.us',
+  participant: '584121212949@s.whatsapp.net',
+  body: '!phone',
+  message: Message {
+    conversation: '!phone',
+    messageContextInfo: MessageContextInfo { messageSecret: [Uint8Array] }
+  },
+  messageTimestamp: 1734982739,
+  pushName: '.'
+}
+[handleMsg]:  {
+  from: '120363356240883876@g.us',
+  participant: '584121212949@s.whatsapp.net',
+  body: '!add_number 584121212949',
+  message: Message {
+    conversation: '!add_number 584121212949',
+    messageContextInfo: MessageContextInfo { messageSecret: [Uint8Array] }
+  },
+  messageTimestamp: 1734982754,
+  pushName: '.'
+}
+[handleMsg]:  {
+  from: '120363356240883876@g.us',
+  participant: '584121212949@s.whatsapp.net',
+  body: '!save_list',
+  message: Message {
+    conversation: '!save_list',
+    messageContextInfo: MessageContextInfo { messageSecret: [Uint8Array] }
+  },
+  messageTimestamp: 1734982758,
+  pushName: '.'
+}
+[handleMsg]:  {
+  from: '120363356240883876@g.us',
+  participant: '584121212949@s.whatsapp.net',
+  body: '!remove 2',
+  message: Message {
+    conversation: '!remove 2',
+    messageContextInfo: MessageContextInfo { messageSecret: [Uint8Array] }
+  },
+  messageTimestamp: 1734982763,
+  pushName: '.'
+}
+[handleMsg]:  {
+  from: '120363356240883876@g.us',
+  participant: '584121212949@s.whatsapp.net',
+  body: '!end_config',
+  message: Message {
+    conversation: '!end_config',
+    messageContextInfo: MessageContextInfo { messageSecret: [Uint8Array] }
+  },
+  messageTimestamp: 1734982774,
+  pushName: '.'
+}
